@@ -1,0 +1,11 @@
+diff -Nrup a/sysdeps/powerpc/Makefile b/sysdeps/powerpc/Makefile
+--- a/sysdeps/powerpc/Makefile	2010-05-04 05:27:23.000000000 -0600
++++ b/sysdeps/powerpc/Makefile	2013-05-28 09:56:51.056475174 -0600
+@@ -1,7 +1,3 @@
+-# We always want to use the new mnemonic syntax even if we are on a RS6000
+-# machine.
+-+cflags += -mnew-mnemonics
+-
+ ifeq ($(subdir),gmon)
+ sysdep_routines += ppc-mcount
+ endif

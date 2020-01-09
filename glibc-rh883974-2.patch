@@ -1,0 +1,21 @@
+diff -Nrup a/timezone/zic.c b/timezone/zic.c
+--- a/timezone/zic.c	2013-07-19 07:25:11.726506479 -0600
++++ b/timezone/zic.c	2013-07-19 07:27:15.059083404 -0600
+@@ -2473,14 +2473,12 @@ oadd(t1, t2)
+ const long	t1;
+ const long	t2;
+ {
+-	register long	t;
+-
+-	t = t1 + t2;
+-	if ((t2 > 0 && t <= t1) || (t2 < 0 && t >= t1)) {
++	if (t1 < 0 ? t2 < LONG_MIN - t1 : LONG_MAX - t1 < t2) {
+ 		error(_("time overflow"));
+ 		exit(EXIT_FAILURE);
+ 	}
+-	return t;
++
++	return t1 + t2;
+ }
+ 
+ static zic_t

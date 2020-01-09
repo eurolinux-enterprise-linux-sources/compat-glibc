@@ -1,0 +1,61 @@
+#
+# Red Hat BZ:
+# https://bugzilla.redhat.com/show_bug.cgi?id=911307
+#
+# Sourceware BZ: None.
+#
+# Upstreamm submission: Not yet completed.
+#
+# ChangeLog
+#
+# 2013-02-27  Carlos O'Donell  <carlos@redhat.com>
+#
+#	* elf/Makefile (CFLAGS-.o): Add -fno-tree-loop-distribute-patterns.
+#	(CFLAGS-.os): Likewise.
+#	(CFLAGS-.op): Likewise.
+#	(CFLAGS-.ob): Likewise.
+#	(CFLAGS-.oS): Likewise.
+#	* string/Makefile (CFLAGS-.o): Likewise.
+#	(CFLAGS-.os): Likewise.
+#	(CFLAGS-.op): Likewise.
+#	(CFLAGS-.ob): Likewise.
+#	(CFLAGS-.oS): Likewise.
+#
+diff -Nrup a/elf/Makefile b/elf/Makefile
+--- a/elf/Makefile	2013-05-28 09:56:09.798610050 -0600
++++ b/elf/Makefile	2013-05-28 13:30:20.007930731 -0600
+@@ -461,6 +461,16 @@ CFLAGS-cache.c = $(SYSCONF-FLAGS)
+ CPPFLAGS-.os += $(if $(filter $(@F),$(patsubst %,%.os,$(all-rtld-routines))),\
+ 		     -DNOT_IN_libc=1 -DIS_IN_rtld=1 -DIN_LIB=rtld)
+ 
++# Disable any optimization which might result in function calls during early
++# dynamic loader startup. We disable -ftree-loop-distribute-patterns which
++# might convert code into calls to functions like memcpy or memset when the PLT
++# is not yet setup.
++CFLAGS-.o += -fno-tree-loop-distribute-patterns
++CFLAGS-.os += -fno-tree-loop-distribute-patterns
++CFLAGS-.op += -fno-tree-loop-distribute-patterns
++CFLAGS-.ob += -fno-tree-loop-distribute-patterns
++CFLAGS-.oS += -fno-tree-loop-distribute-patterns
++
+ test-modules = $(addprefix $(objpfx),$(addsuffix .so,$(strip $(modules-names))))
+ generated += $(addsuffix .so,$(strip $(modules-names)))
+ 
+diff -Nrup a/string/Makefile b/string/Makefile
+--- a/string/Makefile	2013-05-28 09:56:09.534610913 -0600
++++ b/string/Makefile	2013-05-28 13:31:01.693053657 -0600
+@@ -77,6 +77,14 @@ CFLAGS-test-ffs.c = -fno-builtin
+ CFLAGS-tst-inlcall.c = -fno-builtin
+ CFLAGS-bug-strstr1.c = -fno-builtin
+ 
++# Disable any optimization which might result in function calls to the very
++# same functions we are trying to compile, thus creating an infinite loop.
++CFLAGS-.o += -fno-tree-loop-distribute-patterns
++CFLAGS-.os += -fno-tree-loop-distribute-patterns
++CFLAGS-.op += -fno-tree-loop-distribute-patterns
++CFLAGS-.ob += -fno-tree-loop-distribute-patterns
++CFLAGS-.oS += -fno-tree-loop-distribute-patterns
++
+ ifeq ($(cross-compiling),no)
+ tests: $(objpfx)tst-svc.out
+ $(objpfx)tst-svc.out: tst-svc.input $(objpfx)tst-svc

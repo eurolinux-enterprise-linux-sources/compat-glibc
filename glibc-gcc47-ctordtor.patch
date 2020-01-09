@@ -1,0 +1,263 @@
+diff -Nrup a/config.h.in b/config.h.in
+--- a/config.h.in	2012-06-07 10:17:05.004639296 -0600
++++ b/config.h.in	2012-06-07 10:17:45.289449200 -0600
+@@ -204,6 +204,9 @@
+ /* Define if Systemtap <sys/sdt.h> probes should be defined.  */
+ #undef USE_STAP_PROBE
+ 
++/* Define if `.ctors' and `.dtors' sections shouldn't be used.  */
++#undef	NO_CTORS_DTORS_SECTIONS
++
+ /*
+  */
+ 
+diff -Nrup a/configure b/configure
+--- a/configure	2012-06-07 10:17:05.427637302 -0600
++++ b/configure	2012-06-07 10:18:20.452282885 -0600
+@@ -577,7 +577,7 @@ as_tr_sh="eval sed 'y%*+%pp%;s%[^_$as_cr
+ exec 7<&0 </dev/null 6>&1
+ 
+ # Name of the host.
+-# hostname on some systems (SVR3.2, Linux) returns a bogus exit status,
++# hostname on some systems (SVR3.2, old GNU/Linux) returns a bogus exit status,
+ # so uname gets run too.
+ ac_hostname=`(hostname || uname -n) 2>/dev/null | sed 1q`
+ 
+@@ -1307,8 +1307,8 @@ target=$target_alias
+ if test "x$host_alias" != x; then
+   if test "x$build_alias" = x; then
+     cross_compiling=maybe
+-    $as_echo "$as_me: WARNING: If you wanted to set the --build type, don't use --host.
+-    If a cross compiler is detected then cross compile mode will be used." >&2
++    $as_echo "$as_me: WARNING: if you wanted to set the --build type, don't use --host.
++    If a cross compiler is detected then cross compile mode will be used" >&2
+   elif test "x$build_alias" != "x$host_alias"; then
+     cross_compiling=yes
+   fi
+@@ -1412,7 +1412,7 @@ Configuration:
+       --help=short        display options specific to this package
+       --help=recursive    display the short help of all the included packages
+   -V, --version           display version information and exit
+-  -q, --quiet, --silent   do not print \`checking...' messages
++  -q, --quiet, --silent   do not print \`checking ...' messages
+       --cache-file=FILE   cache test results in FILE [disabled]
+   -C, --config-cache      alias for \`--cache-file=config.cache'
+   -n, --no-create         do not create output files
+@@ -1725,11 +1725,9 @@ trap 'exit_status=$?
+   {
+     echo
+ 
+-    cat <<\_ASBOX
+-## ---------------- ##
++    $as_echo "## ---------------- ##
+ ## Cache variables. ##
+-## ---------------- ##
+-_ASBOX
++## ---------------- ##"
+     echo
+     # The following way of writing the cache mishandles newlines in values,
+ (
+@@ -1763,11 +1761,9 @@ $as_echo "$as_me: WARNING: cache variabl
+ )
+     echo
+ 
+-    cat <<\_ASBOX
+-## ----------------- ##
++    $as_echo "## ----------------- ##
+ ## Output variables. ##
+-## ----------------- ##
+-_ASBOX
++## ----------------- ##"
+     echo
+     for ac_var in $ac_subst_vars
+     do
+@@ -1780,11 +1776,9 @@ _ASBOX
+     echo
+ 
+     if test -n "$ac_subst_files"; then
+-      cat <<\_ASBOX
+-## ------------------- ##
++      $as_echo "## ------------------- ##
+ ## File substitutions. ##
+-## ------------------- ##
+-_ASBOX
++## ------------------- ##"
+       echo
+       for ac_var in $ac_subst_files
+       do
+@@ -1798,11 +1792,9 @@ _ASBOX
+     fi
+ 
+     if test -s confdefs.h; then
+-      cat <<\_ASBOX
+-## ----------- ##
++      $as_echo "## ----------- ##
+ ## confdefs.h. ##
+-## ----------- ##
+-_ASBOX
++## ----------- ##"
+       echo
+       cat confdefs.h
+       echo
+@@ -1855,7 +1847,12 @@ _ACEOF
+ ac_site_file1=NONE
+ ac_site_file2=NONE
+ if test -n "$CONFIG_SITE"; then
+-  ac_site_file1=$CONFIG_SITE
++  # We do not want a PATH search for config.site.
++  case $CONFIG_SITE in #((
++    -*)  ac_site_file1=./$CONFIG_SITE;;
++    */*) ac_site_file1=$CONFIG_SITE;;
++    *)   ac_site_file1=./$CONFIG_SITE;;
++  esac
+ elif test "x$prefix" != xNONE; then
+   ac_site_file1=$prefix/share/config.site
+   ac_site_file2=$prefix/etc/config.site
+@@ -1870,7 +1867,11 @@ do
+     { $as_echo "$as_me:$LINENO: loading site script $ac_site_file" >&5
+ $as_echo "$as_me: loading site script $ac_site_file" >&6;}
+     sed 's/^/| /' "$ac_site_file" >&5
+-    . "$ac_site_file"
++    . "$ac_site_file" \
++      || { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
++$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
++as_fn_error $? "failed to load site script $ac_site_file
++See \`config.log' for more details" "$LINENO" 5; }
+   fi
+ done
+ 
+@@ -6520,9 +6521,15 @@ fi
+ { $as_echo "$as_me:$LINENO: result: $libc_cv_initfini_array" >&5
+ $as_echo "$libc_cv_initfini_array" >&6; }
+   if test $libc_cv_initfini_array != yes; then
+-    { { $as_echo "$as_me:$LINENO: error: Need linker with .init_array/.fini_array support." >&5
+-$as_echo "$as_me: error: Need linker with .init_array/.fini_array support." >&2;}
+-   { (exit 1); exit 1; }; }
++    as_fn_error $? "Need linker with .init_array/.fini_array support." "$LINENO" 5
++  elif { ac_try='${CC-cc} -Wl,--verbose 2>&1|grep SORT_BY_INIT_PRIORITY 1>&5'
++  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
++  test $ac_status = 0; }; }; then
++    $as_echo "#define NO_CTORS_DTORS_SECTIONS 1" >>confdefs.h
++
+   fi
+ 
+   { $as_echo "$as_me:$LINENO: checking for libunwind-support in compiler" >&5
+@@ -9054,6 +9061,7 @@ DEFS=-DHAVE_CONFIG_H
+ 
+ ac_libobjs=
+ ac_ltlibobjs=
++U=
+ for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
+   # 1. Remove the extension, and $U if already installed.
+   ac_script='s/\$U\././;s/\.o$//;s/\.obj$//'
+diff -Nrup a/configure.in b/configure.in
+--- a/configure.in	2012-06-07 10:17:05.009639273 -0600
++++ b/configure.in	2012-06-07 10:17:45.349448917 -0600
+@@ -1536,6 +1536,8 @@ EOF
+   rm -f conftest*])
+   if test $libc_cv_initfini_array != yes; then
+     AC_MSG_ERROR([Need linker with .init_array/.fini_array support.])
++  elif AC_TRY_COMMAND([${CC-cc} -Wl,--verbose 2>&1|grep SORT_BY_INIT_PRIORITY 1>&AS_MESSAGE_LOG_FD]); then
++    AC_DEFINE(NO_CTORS_DTORS_SECTIONS)
+   fi
+ 
+   AC_CACHE_CHECK(for libunwind-support in compiler,
+diff -Nrup a/elf/sofini.c b/elf/sofini.c
+--- a/elf/sofini.c	2010-05-04 05:27:23.000000000 -0600
++++ b/elf/sofini.c	2012-06-07 10:17:45.350448913 -0600
+@@ -1,12 +1,14 @@
+ /* Finalizer module for ELF shared C library.  This provides terminating
+    null pointer words in the `.ctors' and `.dtors' sections.  */
+ 
++#ifndef NO_CTORS_DTORS_SECTIONS
+ static void (*const __CTOR_END__[1]) (void)
+      __attribute__ ((used, section (".ctors")))
+      = { 0 };
+ static void (*const __DTOR_END__[1]) (void)
+      __attribute__ ((used, section (".dtors")))
+      = { 0 };
++#endif
+ 
+ /* Terminate the frame unwind info section with a 4byte 0 as a sentinel;
+    this would be the 'length' field in a real FDE.  */
+diff -Nrup a/elf/soinit.c b/elf/soinit.c
+--- a/elf/soinit.c	2010-05-04 05:27:23.000000000 -0600
++++ b/elf/soinit.c	2012-06-07 10:17:45.351448908 -0600
+@@ -3,6 +3,7 @@
+    the `.ctors' and `.dtors' sections so the lists are terminated, and
+    calling those lists of functions.  */
+ 
++#ifndef NO_CTORS_DTORS_SECTIONS
+ #include <libc-internal.h>
+ #include <stdlib.h>
+ 
+@@ -40,3 +41,4 @@ __libc_fini (void)
+ 
+ void (*_fini_ptr) (void) __attribute__ ((section (".fini_array")))
+      = &__libc_fini;
++#endif
+diff -Nrup a/sysdeps/i386/init-first.c b/sysdeps/i386/init-first.c
+--- a/sysdeps/i386/init-first.c	2010-05-04 05:27:23.000000000 -0600
++++ b/sysdeps/i386/init-first.c	2012-06-07 10:17:45.353448898 -0600
+@@ -59,7 +59,9 @@ _init (int argc, ...)
+ {
+   init (&argc);
+ 
++#ifndef NO_CTORS_DTORS_SECTIONS
+   __libc_global_ctors ();
++#endif
+ }
+ #endif
+ 
+diff -Nrup a/sysdeps/mach/hurd/i386/init-first.c b/sysdeps/mach/hurd/i386/init-first.c
+--- a/sysdeps/mach/hurd/i386/init-first.c	2010-05-04 05:27:23.000000000 -0600
++++ b/sysdeps/mach/hurd/i386/init-first.c	2012-06-07 10:17:45.354448893 -0600
+@@ -92,7 +92,7 @@ posixland_init (int argc, char **argv, c
+   __getopt_clean_environment (envp);
+ #endif
+ 
+-#ifdef SHARED
++#if defined SHARED && !defined NO_CTORS_DTORS_SECTIONS
+   __libc_global_ctors ();
+ #endif
+ }
+diff -Nrup a/sysdeps/mach/hurd/powerpc/init-first.c b/sysdeps/mach/hurd/powerpc/init-first.c
+--- a/sysdeps/mach/hurd/powerpc/init-first.c	2010-05-04 05:27:23.000000000 -0600
++++ b/sysdeps/mach/hurd/powerpc/init-first.c	2012-06-07 10:17:45.354448893 -0600
+@@ -82,7 +82,7 @@ posixland_init (int argc, char **argv, c
+   __getopt_clean_environment (__environ);
+ #endif
+ 
+-#ifdef SHARED
++#if defined SHARED && !defined NO_CTORS_DTORS_SECTIONS
+   __libc_global_ctors ();
+ #endif
+ }
+diff -Nrup a/sysdeps/sh/init-first.c b/sysdeps/sh/init-first.c
+--- a/sysdeps/sh/init-first.c	2010-05-04 05:27:23.000000000 -0600
++++ b/sysdeps/sh/init-first.c	2012-06-07 10:17:45.355448888 -0600
+@@ -59,7 +59,9 @@ _init (int argc, ...)
+ {
+   init (&argc);
+ 
++#ifndef NO_CTORS_DTORS_SECTIONS
+   __libc_global_ctors ();
++#endif
+ }
+ #endif
+ 
+diff -Nrup a/sysdeps/unix/sysv/linux/init-first.c b/sysdeps/unix/sysv/linux/init-first.c
+--- a/sysdeps/unix/sysv/linux/init-first.c	2010-05-04 05:27:23.000000000 -0600
++++ b/sysdeps/unix/sysv/linux/init-first.c	2012-06-07 10:17:45.356448884 -0600
+@@ -93,7 +93,7 @@ _init (int argc, char **argv, char **env
+   __getopt_clean_environment (envp);
+ #endif
+ 
+-#ifdef SHARED
++#if defined SHARED && !defined NO_CTORS_DTORS_SECTIONS
+   __libc_global_ctors ();
+ #endif
+ }

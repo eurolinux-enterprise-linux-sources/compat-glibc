@@ -1,0 +1,16 @@
+diff -rup a/manual/Makefile b/manual/Makefile
+--- a/manual/Makefile	2010-05-04 05:27:23.000000000 -0600
++++ b/manual/Makefile	2012-05-07 15:18:52.443176136 -0600
+@@ -232,7 +232,11 @@ ifdef objpfx
+ .PHONY: stubs
+ stubs: $(objpfx)stubs
+ endif
+-$(objpfx)stubs ../po/manual.pot $(objpfx)stamp%:
++$(objpfx)stubs ../po/manual.pot:
++	$(make-target-directory)
++	touch $@
++
++$(objpfx)stamp%:
+ 	$(make-target-directory)
+ 	touch $@
+ 
