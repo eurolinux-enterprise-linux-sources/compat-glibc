@@ -23,7 +23,7 @@ Name: compat-glibc
 # XXX Should this bump?
 Epoch: 1
 Version: %{glibcversion}
-Release: 1.80.5%{?dist}
+Release: 4%{?dist}
 # GPLv2+ is used in a bunch of programs, LGPLv2+ is used for libraries.
 # Things that are linked directly into dynamically linked programs
 # and shared libraries (e.g. crt files, lib*_nonshared.a) have an additional
@@ -153,6 +153,9 @@ Patch10005: glibc-rh911307.patch
 
 # Newer compiler is also complaining about overflow problems
 Patch10006: glibc-rh883974-2.patch
+
+# Fix namespace conflict with Altivec
+Patch10007: glibc-rh1048853.patch
 
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Autoreq: true
@@ -347,6 +350,7 @@ Red Hat Enterprise Linux 56
 %patch10004 -p1
 %patch10005 -p1
 %patch10006 -p1
+%patch10007 -p1
 
 find . -type f -size 0 -o -name "*.orig" -exec rm -f {} \;
 touch `find . -name configure`
@@ -524,6 +528,15 @@ rm -rf "$RPM_BUILD_ROOT"
 
 
 %changelog
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1:2.12-4
+- Mass rebuild 2014-01-24
+
+* Tue Jan  7 2014 Siddhesh Poyarekar <siddhesh@redhat.com> - 1:2.12-3
+- Fix namespace conflict with Altivec (#1048853).
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1:2.12-2
+- Mass rebuild 2013-12-27
+
 * Fri Jul 19 2013 Jeff Law <law@redhat.com> - 1:2.12-1.80.5
 - Backport timezone/zic.c change to avoid overflow in oadd (#883974) 
 
